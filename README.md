@@ -18,9 +18,11 @@ TEAMNAME=Tier0Replay
 CENTRAL_SERVICES=cmsweb-testbed.cern.ch
 AG_NUM=0
 FLAVOR=mysql
-PATCHES=""
+PATCHES="9453"
 ```
 `WMA_TAG` and `DEPLOY_TAG` must match what is in install.sh. You should use WMAgent 1.3.3.patch3 or later. This to avoid needing obsolete dashboard services.
+
+Patch 9453 includes changes to SimpleCondorPlugin.py and WMAgentConfig.py that allow the agent to properly run inside docker. They are also changes to unittest.
 
 Building the image
 
@@ -39,12 +41,12 @@ For now when you start a container it simply drops you to a login shell, allowin
 
 The config folder must contain ./wmagent/config.py file. This file in not usually present in Tier0 machines, so it must be created beforehand. Take in mind that components paths must match those inside the container. Also, you must provide a ReqMgrURL2, usually ignored in tier0 config files. 
 
-Right now, there is an issue with the wmagent-mod-config that prevents it to automatically generate workspace/config.py, so you may need to manually copy or link to wmagent/config.py
+Right now, there is an issue with the wmagent-mod-config that prevents it to automatically generate workspace/config.py, so you may need to manually copy or soft-link wmagent/config.py
 
 You also need to bind mount the secrets file.
 * /data/admin/wmagent/WMAgent.secrets
 
-Remember this container uses MySQL instead of Oracle DB, so remember you need to add MySQL credentials and also remove Oracle credentials. 
+This container uses MySQL instead of Oracle DB, so you need to add MySQL credentials and remove Oracle credentials. 
 
 The install and config dirs will be initialized the first time you execute run.sh and a .dockerinit file will be placed to keep track of the initialization. Subsequent container restarts won't touch these directories.
 
