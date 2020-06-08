@@ -22,8 +22,8 @@
 
 set -x
 
-WMA_TAG=1.2.8
-DEPLOY_TAG=HG1909e
+WMA_TAG=1.3.3.patch3
+DEPLOY_TAG=HG2006e
 TEAMNAME=Tier0Replay
 CENTRAL_SERVICES=cmsweb-testbed.cern.ch
 AG_NUM=0
@@ -93,7 +93,7 @@ basic_checks()
 check_certs()
 {
   echo -ne "\nChecking whether the certificates and proxy are in place ..."
-  if [ ! -f $CERTS_DIR/myproxy.pem ] || [ ! -f $CERTS_DIR/servicecert.pem ] || [ ! -f $CERTS_DIR/servicekey.pem ]; then
+  if [ ! -f $CERTS_DIR/serviceproxy-vocms001.pem ] || [ ! -f $CERTS_DIR/servicecert-vocms001.pem ] || [ ! -f $CERTS_DIR/servicekey-vocms001.pem ]; then
     echo -e "\n  ... nope, trying to copy them from another node, you might be prompted for the cmst1 password."
     set -e
     if [[ "$IAM" == cmst1 ]]; then
@@ -116,7 +116,7 @@ check_oracle()
   tmpdir=`mktemp -d`
   cd $tmpdir
 
-  wget -nv https://raw.githubusercontent.com/dmwm/deployment/master/wmagent/manage -O manage
+  wget -nv https://raw.githubusercontent.com/dmwm/deployment/$DEPLOY_TAG/tier0/manage -O manage
   chmod +x manage
   echo -e "SELECT COUNT(*) from USER_TABLES;" > check_db_status.sql
   ### FIXME: new nodes don't have sqlplus ... what to do now?
@@ -310,7 +310,7 @@ sed -i "s+REPLACE_TEAM_NAME+$TEAMNAME+" $MANAGE_DIR/config.py
 sed -i "s+Agent.agentNumber = 0+Agent.agentNumber = $AG_NUM+" $MANAGE_DIR/config.py
 if [[ "$TEAMNAME" == relval ]]; then
 sed -i "s+config.TaskArchiver.archiveDelayHours = 24+config.TaskArchiver.archiveDelayHours = 336+" $MANAGE_DIR/config.py
-elif [[ "$TEAMNAME" == *testbed* ]] || [[ "$TEAMNAME" == *dev* ]]; then
+elif [[ "$TEAMNAME" == *testbed* ]] || [[ "$TEAMNAME" == *dev* ]]  || [[ "$TEAMNAME" == Tier0Replay ]]; then
 GLOBAL_DBS_URL=https://cmsweb-testbed.cern.ch/dbs/int/global/DBSReader
 sed -i "s+DBSInterface.globalDBSUrl = 'https://cmsweb.cern.ch/dbs/prod/global/DBSReader'+DBSInterface.globalDBSUrl = '$GLOBAL_DBS_URL'+" $MANAGE_DIR/config.py
 sed -i "s+DBSInterface.DBSUrl = 'https://cmsweb.cern.ch/dbs/prod/global/DBSReader'+DBSInterface.DBSUrl = '$GLOBAL_DBS_URL'+" $MANAGE_DIR/config.py
@@ -326,7 +326,7 @@ echo "Done!" && echo
 ### Populating resource-control
 echo "*** Populating resource-control ***"
 cd $MANAGE_DIR
-if [[ "$TEAMNAME" == relval* || "$TEAMNAME" == *testbed* ]]; then
+if [[ "$TEAMNAME" == relval* || "$TEAMNAME" == *testbed*  || "$TEAMNAME" == Tier0Replay ]]; then
 echo "Adding only T1 and T2 sites to resource-control..."
 ./manage execute-agent wmagent-resource-control --add-T1s --plugin=SimpleCondorPlugin --pending-slots=50 --running-slots=50 --down
 ./manage execute-agent wmagent-resource-control --add-T2s --plugin=SimpleCondorPlugin --pending-slots=50 --running-slots=50 --down
@@ -358,20 +358,19 @@ echo "Done!" && echo
 
 ### Populating cronjob with utilitarian scripts
 echo "*** Creating cronjobs for them ***"
-if [[ "$TEAMNAME" == *testbed* || "$TEAMNAME" == *dev* ]]; then
+if [[ "$TEAMNAME" == Tier0Replay ]]; then
 ( crontab -l 2>/dev/null | grep -Fv ntpdate
-echo "55 */12 * * * (export X509_USER_CERT=/data/certs/servicecert.pem; export X509_USER_KEY=/data/certs/servicekey.pem; myproxy-get-delegation -v -l amaltaro -t 168 -s 'myproxy.cern.ch' -k $MYPROXY_CREDNAME -n -o /data/certs/mynewproxy.pem && voms-proxy-init -rfc -voms cms:/cms/Role=production -valid 168:00 -noregen -cert /data/certs/mynewproxy.pem -key /data/certs/mynewproxy.pem -out /data/certs/myproxy.pem)"
+echo "(export X509_USER_CERT=/data/certs/servicecert-vocms001.pem; export X509_USER_KEY=/data/certs/servicekey-vocms001.pem; /bin/voms-proxy-init -rfc -voms cms:/cms/Role=production -valid 168:00 -cert $X509_USER_CERT -key $X509_USER_KEY -out /data/certs/serviceproxy-vocms001.pem)"
 ) | crontab -
 else
 ( crontab -l 2>/dev/null | grep -Fv ntpdate
 echo "55 */12 * * * (export X509_USER_CERT=/data/certs/servicecert.pem; export X509_USER_KEY=/data/certs/servicekey.pem; myproxy-get-delegation -v -l amaltaro -t 168 -s 'myproxy.cern.ch' -k $MYPROXY_CREDNAME -n -o /data/certs/mynewproxy.pem && voms-proxy-init -rfc -voms cms:/cms/Role=production -valid 168:00 -noregen -cert /data/certs/mynewproxy.pem -key /data/certs/mynewproxy.pem -out /data/certs/myproxy.pem)"
-echo "58 */12 * * * python /data/admin/wmagent/checkProxy.py --proxy /data/certs/myproxy.pem --time 120 --send-mail True --mail alan.malta@cern.ch"
+echo "58 */12 * * * python /data/admin/wmagent/checkProxy.py --proxy /data/certs/serviceproxy-vocms001.pem --time 120 --send-mail True --mail german.giraldo@cern.ch"
 echo "#workaround for the ErrorHandler silence issue"
 echo "*/15 * * * *  source /data/admin/wmagent/restartComponent.sh > /dev/null"
 ) | crontab -
 fi
 echo "Done!" && echo
-
 set +x
 
 echo && echo "Docker container is running! However you still need to:"

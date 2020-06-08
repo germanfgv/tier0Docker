@@ -6,7 +6,7 @@ RUN adduser -u 31961 -g 1399 cmst1
 
 ### Setup directory and files permissions
 RUN install -o cmst1 -g 1399 -d /data/srv /data/admin /data/certs
-RUN chown root:1399 /data
+RUN chown root:1399 /data; pip install htcondor
 
 ENV WDIR=/data
 
@@ -16,7 +16,10 @@ ADD install.sh ${WDIR}/install.sh
 # Add wmagent run script
 ADD run.sh ${WDIR}/run.sh
 
-RUN chown cmst1 ${WDIR}/run.sh ${WDIR}/install.sh; pip install htcondor
+# Add .bashrc with alias and environment
+ADD .bashrc /home/cmst1/.bashrc
+
+RUN chown cmst1 ${WDIR}/run.sh ${WDIR}/install.sh
 
 USER cmst1
 

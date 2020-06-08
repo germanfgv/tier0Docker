@@ -13,8 +13,8 @@
 
 set -x
 
-WMA_TAG=1.2.8
-DEPLOY_TAG=HG1909e
+WMA_TAG=1.3.3.patch3
+DEPLOY_TAG=HG2006e
 WMA_ARCH=slc7_amd64_gcc630
 REPO="comp=comp"
 

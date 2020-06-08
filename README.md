@@ -18,9 +18,9 @@ TEAMNAME=Tier0Replay
 CENTRAL_SERVICES=cmsweb-testbed.cern.ch
 AG_NUM=0
 FLAVOR=mysql
-PATCHES="9453"
+PATCHES=""
 ```
-`WMA_TAG` and `DEPLOY_TAG` must match what is in install.sh. You should use WMAgent 1.3.3.patch3 or later. This to avoid needing obsolete dashboard services.
+`WMA_TAG` and `DEPLOY_TAG` must match what is in install.sh. You should use WMAgent 1.3.3.patch3 or later. This in order to avoid needing obsolete dashboard services.
 
 Patch 9453 includes changes to SimpleCondorPlugin.py and WMAgentConfig.py that allow the agent to properly run inside docker. They are also changes to unittest.
 
@@ -58,13 +58,13 @@ docker run --network=host --rm -h `hostname -f` -it \
 -v /tmp:/tmp:Z \
 -v /data/tier0/srv/wmagent/current/install:/data/srv/wmagent/current/install:Z \
 -v /data/tier0/srv/wmagent/current/config:/data/srv/wmagent/current/config:Z \
--v /data/tier0/admin/wmagent/WMAgent.secrets:/data/admin/wmagent/Docker.secrets:Z \
+-v /data/tier0/admin/Docker.secrets:/data/admin/wmagent/WMAgent.secrets:Z \
 <image>
 ```
+
+You can also use the `runT0Docker.sh` script included in this repository.
 
 ### Running the Agent
 
 I've found that it is neccessary to run a `$manage clean-agent` before in order to create MySQL tables. This should be corrected in the future but, for now, it is the first command you should execute. Then, the `run.sh` script will initialize MariaDB and CouchDB. Source the agent environment and `$manage start-agent` and your Docker agent should be up and running.
-
-
 
