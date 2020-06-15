@@ -360,7 +360,7 @@ echo "Done!" && echo
 echo "*** Creating cronjobs for them ***"
 if [[ "$TEAMNAME" == Tier0Replay ]]; then
 ( crontab -l 2>/dev/null | grep -Fv ntpdate
-echo "(export X509_USER_CERT=/data/certs/servicecert-vocms001.pem; export X509_USER_KEY=/data/certs/servicekey-vocms001.pem; /bin/voms-proxy-init -rfc -voms cms:/cms/Role=production -valid 168:00 -cert $X509_USER_CERT -key $X509_USER_KEY -out /data/certs/serviceproxy-vocms001.pem)"
+echo "55 */12 * * * (export X509_USER_CERT=/data/certs/servicecert-vocms001.pem; export X509_USER_KEY=/data/certs/servicekey-vocms001.pem; /bin/voms-proxy-init -rfc -voms cms:/cms/Role=production -valid 168:00 -cert $X509_USER_CERT -key $X509_USER_KEY -out /data/certs/serviceproxy-vocms001.pem)"
 ) | crontab -
 else
 ( crontab -l 2>/dev/null | grep -Fv ntpdate
